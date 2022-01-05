@@ -3,7 +3,7 @@ import random
 import math
 
 # setting up seed for reproudicible output... helpful for debugging
-random.seed(0)
+# random.seed()
 
 def uniform_random_int(left,right):
     return round(random.uniform(left,right))
@@ -107,14 +107,14 @@ if __name__ == '__main__':
     # step 2
     i = 1
     # initializing between arr with 1 indexing so first item can be anything
-    between = [-1]
-    between.append(expexponential_random_variable(inputs["mean_interarrival_time"]))
+    between = {}
+    between[i] = (expexponential_random_variable(inputs["mean_interarrival_time"]))
      # initializing floor arr with 1 indexing so first item can be anything
-    floor = [-1]
-    floor.append(uniform_random_int(2,inputs["total_floors"]))
+    floor = {}
+    floor[i] = (uniform_random_int(2,inputs["total_floors"]))
     # initializing delivery arr with 1 indexing so first item can be anything
-    delivery = [-1]
-    delivery.append(inputs["door_holding_time"]) # delivery[1] = 15
+    delivery = {}
+    delivery[i] = (inputs["door_holding_time"]) # delivery[1] = 15
 
     # step 3
     # initialize clock time
@@ -146,11 +146,17 @@ if __name__ == '__main__':
     arrive = {}
     # for step 30 to 8
     goto_step_8_flag = False
+    # from step 30
+    limit = 0
+    queue = 0
     # step 4
     while time<=inputs["simulation_time"]:
         # step 5
         
         if not goto_step_8_flag:
+            logger.info(inputs["total_elevators"])
+            logger.info(time)
+            logger.info(return_time)
             j = -1 # initializing lift no with -1
             for lift_no in range(inputs["total_elevators"]):
                 if time >= return_time[lift_no+1]:    # (i+1) for one indexing
@@ -168,16 +174,23 @@ if __name__ == '__main__':
                 j = -1 # initializing lift no with -1
                 while(True): # used for goto 20
                     i += 1
-                    between.append(expexponential_random_variable(inputs["mean_interarrival_time"]))
-                    floor.append(uniform_random_int(2,inputs["total_floors"]))
+                    between[i] = (expexponential_random_variable(inputs["mean_interarrival_time"]))
+                    floor[i] = (uniform_random_int(2,inputs["total_floors"]))
                     time += between[i]
                     arrive[i] = time
                     queue += 1
+                    logger.info(between)
+                    logger.info(floor)
+                    logger.info(arrive)
+                    logger.info(queue)
                     # step 21
                     for lift_no in range(inputs["total_elevators"]):
                         if time >= return_time[lift_no+1]:    # (i+1) for one indexing
                             j = lift_no+1
                             break
+
+                    logger.info(j)
+                    
                     if j == -1:
                         continue # GOTO step 20
                     else:
@@ -202,6 +215,9 @@ if __name__ == '__main__':
                         for k in range(quecust,R+1):
                             selvec[j][floor[k]] = 1
                             flrvec[j][floor[k]] += 1
+
+                        logger.info(selvec)
+                        logger.info(flrvec)
                         
                         # step 25
                         if queue >= state["QUELEN"]:
@@ -209,7 +225,10 @@ if __name__ == '__main__':
                         
                         # step 26
                         state["quetotal"] += occup[j]
-                        state["QUETIME"] += (R-quecust+1) * time - sumArr(quecust,R,arrive)
+                        state["QUETIME"] += (R-quecust+1) * time - sumArr(arrive,quecust,R)
+                        logger.info(state["QUELEN"])
+                        logger.info(state["quetotal"])
+                        logger.info(state["QUETIME"])
 
                         # step 27
                         if(time - startque) >= state["MAXQUE"]:
@@ -234,8 +253,7 @@ if __name__ == '__main__':
                             limit = R
                             for k in range(first[j],limit+1):
                                 n = floor[k] - 1 # an index   # step 12
-                                elevator[k] = 10 * n + 3 * sumArr(flrvec[j],1,n)
-                                + 3 + 10 * sumArr(selvec[j],1,n) + 5
+                                elevator[k] = inputs["inter_floor_traveling_time"] * n + inputs["passenger_disembarking_time"] * sumArr(flrvec[j],1,n) + inputs["passenger_disembarking_time"] + (inputs["opening_time"]+inputs["closing_time"]) * sumArr(selvec[j],1,n) + inputs["opening_time"]
                                 delivery[k] += elevator[k] # step 13
                                 state["DELTIME"] += delivery[k] # step 14
                                 if delivery[k] > state["MAXDEL"]: # step 15
@@ -246,8 +264,7 @@ if __name__ == '__main__':
                             # step 17
                             stop[j] += sumArr(selvec[j],1,inputs["total_floors"])
                             max_index = getMaxIndex(selvec[j])
-                            eldel[j] = 20*(max_index-1) + 3 * sumArr(flrvec[j],1,inputs["total_floors"])
-                            + 10 * sumArr(selvec[j],1,inputs["total_floors"])
+                            eldel[j] = 2*(inputs["inter_floor_traveling_time"])*(max_index-1) + inputs["passenger_disembarking_time"] * sumArr(flrvec[j],1,inputs["total_floors"]) + (inputs["opening_time"]+inputs["closing_time"]) * sumArr(selvec[j],1,inputs["total_floors"])
                             return_time = time + eldel[j]
                             operate[j] += eldel[j]
 
@@ -267,20 +284,20 @@ if __name__ == '__main__':
             logger.info(i)
             logger.info(j)
             # step 6
-            
-            first[j] = i
-            occup[j] = 0
-            selvec[j] = [-1] * (inputs["total_floors"]+1)
-            flrvec[j] = [-1] * (inputs["total_floors"]+1)
-            logger.info(selvec)
-            logger.info(flrvec)
-            for k in range(inputs["total_floors"]):
-                selvec[j][k+1] = 0      # k+1 varies from 1 to total_elevators number inclusive
-                flrvec[j][k+1] = 0
-            
-            logger.info(selvec)
-            logger.info(flrvec)
-            logger.info(floor[i])
+            if not goto_step_8_flag:
+                first[j] = i
+                occup[j] = 0
+                selvec[j] = [-1] * (inputs["total_floors"]+1)
+                flrvec[j] = [-1] * (inputs["total_floors"]+1)
+                logger.info(selvec)
+                logger.info(flrvec)
+                for k in range(inputs["total_floors"]):
+                    selvec[j][k+1] = 0      # k+1 varies from 1 to total_elevators number inclusive
+                    flrvec[j][k+1] = 0
+                
+                logger.info(selvec)
+                logger.info(flrvec)
+                logger.info(floor[i])
         
         # step 7
         while(True):
@@ -297,10 +314,10 @@ if __name__ == '__main__':
 
             # step 8
             i += 1
-            between.append(expexponential_random_variable(inputs["mean_interarrival_time"]))
-            floor.append(uniform_random_int(2,inputs["total_floors"]))
+            between[i] = (expexponential_random_variable(inputs["mean_interarrival_time"]))
+            floor[i] = (uniform_random_int(2,inputs["total_floors"]))
             time += between[i]
-            delivery.append(inputs["door_holding_time"])
+            delivery[i] = (inputs["door_holding_time"])
             logger.info(between)
             logger.info(floor)
             logger.info(delivery)
@@ -346,23 +363,78 @@ if __name__ == '__main__':
         # step 17
         stop[j] += sumArr(selvec[j],1,inputs["total_floors"])
         max_index = getMaxIndex(selvec[j])
-        eldel[j] = 20*(max_index-1) + 3 * sumArr(flrvec[j],1,inputs["total_floors"])
-        + 10 * sumArr(selvec[j],1,inputs["total_floors"])
-        return_time = time + eldel[j]
+        eldel[j] = 2*(inputs["inter_floor_traveling_time"])*(max_index-1) + inputs["passenger_disembarking_time"] * sumArr(flrvec[j],1,inputs["total_floors"]) + (inputs["opening_time"]+inputs["closing_time"]) * sumArr(selvec[j],1,inputs["total_floors"])
+        return_time[j] = time + eldel[j]
         operate[j] += eldel[j]
+        
+        logger.info(2*(inputs["inter_floor_traveling_time"])*(max_index-1))
+        logger.info(inputs["passenger_disembarking_time"] * sumArr(flrvec[j],1,inputs["total_floors"]))
+        logger.info((inputs["opening_time"]+inputs["closing_time"]) * sumArr(selvec[j],1,inputs["total_floors"]))
+        logger.info(max_index)
+        logger.info(stop)
+        logger.info(eldel)
+        logger.info(return_time)
+        logger.info(operate)
 
             # goto 5 will be done automatically after finishing 18
 
-                
-            
-        
+    output_arr = []
+    # step 33
+    N = i - queue
+    state["DELTIME"] /= N
+    logger.info(N)
+    logger.info(state["DELTIME"])
+    logger.info(state["MAXDEL"])
+    output_arr.append(int(N))
+    output_arr.append(int(state["DELTIME"]))
+    output_arr.append(int(state["MAXDEL"]))
 
+    # step 34
+    state["ELEVTIME"] = 0
+    for k in range(1,limit+1):
+        state["ELEVTIME"] += elevator[k]/limit
+    logger.info(state["ELEVTIME"])
+    logger.info(state["MAXELEV"])
+    output_arr.append(int(state["ELEVTIME"]))
+    output_arr.append(int(state["MAXELEV"]))
 
+    # step 35
+    if state["quetotal"] != 0:
+        state["QUETIME"] /= state["quetotal"]
+    logger.info(state["QUELEN"])
+    logger.info(state["QUETIME"])
+    logger.info(state["MAXQUE"])
+    output_arr.append(int(state["QUELEN"]))
+    output_arr.append(int(state["QUETIME"]))
+    output_arr.append(int(state["MAXQUE"]))
 
+    # step 36
+    for k in range(1,inputs["total_elevators"]+1):
+        logger.info(k)
+        logger.info(stop[k])
+        output_arr.append(int(stop[k]))
 
+    for k in range(1,inputs["total_elevators"]+1):
+        logger.info(k)
+        logger.info(operate[k]/inputs["simulation_time"]*100)
+        output_arr.append(int(operate[k]/inputs["simulation_time"]*100))
 
+    logger.info(len(output_arr))
+    logger.info(output_arr)
 
-        # break # this break is not part of the algo and used for finishing the loop
+    csv_line = ""
+    for i in range(len(output_arr)):
+        if i != len(output_arr) - 1:
+            csv_line += f"{output_arr[i]}, "
+        else:
+            csv_line += f"{output_arr[i]}\n"
+
+    logger.info(csv_line)
+    file = open('report.csv','a')
+    file.write(csv_line)
+    
+
+    
 
         
 
