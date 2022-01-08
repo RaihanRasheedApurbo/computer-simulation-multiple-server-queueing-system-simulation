@@ -92,6 +92,21 @@ if __name__ == '__main__':
 
     logger.info(inputs)
 
+    # creating all between before hand
+    upper_bound_of_batches = math.floor(inputs["simulation_time"]/inputs["mean_interarrival_time"]) * 2
+    upper_bound_of_customers = upper_bound_of_batches * inputs["batch_size"]
+    between = []
+    between.append(-5) # first element doesn't matter we are using 1 indexing
+    for i in range(upper_bound_of_batches):
+        # generates number from 1 to batch size
+        people_in_batch = int(random.uniform(1,inputs["batch_size"]+1))
+        # batch arrival time
+        # so first person will have this time and other will have 0
+        between_time = (expexponential_random_variable(inputs["mean_interarrival_time"]))
+        between.append(between_time)
+        for j in range(people_in_batch-1):
+            between.append(0)
+
     # step 1 initialization of variables
     state = {}
     state["DELTIME"] = 0
@@ -106,10 +121,7 @@ if __name__ == '__main__':
 
     # step 2
     i = 1
-    # initializing between arr with 1 indexing so first item can be anything
-    between = {}
-    between[i] = (expexponential_random_variable(inputs["mean_interarrival_time"]))
-     # initializing floor arr with 1 indexing so first item can be anything
+    # initializing floor arr with 1 indexing so first item can be anything
     floor = {}
     floor[i] = (uniform_random_int(2,inputs["total_floors"]))
     # initializing delivery arr with 1 indexing so first item can be anything
@@ -174,12 +186,10 @@ if __name__ == '__main__':
                 j = -1 # initializing lift no with -1
                 while(True): # used for goto 20
                     i += 1
-                    between[i] = (expexponential_random_variable(inputs["mean_interarrival_time"]))
                     floor[i] = (uniform_random_int(2,inputs["total_floors"]))
                     time += between[i]
                     arrive[i] = time
                     queue += 1
-                    logger.info(between)
                     logger.info(floor)
                     logger.info(arrive)
                     logger.info(queue)
@@ -314,11 +324,9 @@ if __name__ == '__main__':
 
             # step 8
             i += 1
-            between[i] = (expexponential_random_variable(inputs["mean_interarrival_time"]))
             floor[i] = (uniform_random_int(2,inputs["total_floors"]))
             time += between[i]
             delivery[i] = (inputs["door_holding_time"])
-            logger.info(between)
             logger.info(floor)
             logger.info(delivery)
 
