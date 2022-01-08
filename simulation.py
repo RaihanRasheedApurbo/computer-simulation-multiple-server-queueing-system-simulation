@@ -14,11 +14,6 @@ def expexponential_random_variable(mean):
     return_value = -1 * mean * ln_uniform_random_variable
     return return_value
 
-def no_elevator_is_available():
-    logger.info('hi')
-
-def send_off_tagged_elevator():
-    print("hi")
 
 def sumArr(arr,start,finish):
     sum = 0
@@ -135,9 +130,7 @@ if __name__ == '__main__':
     return_time = [-1] * (inputs["total_elevators"] + 1)
     for lift_no in range(inputs["total_elevators"]):
         return_time[lift_no+1] = time        # (lift_no+1) for one indexing
-    # making upperbound of customers
-    upper_bound_of_customers = math.floor(inputs["simulation_time"]/inputs["mean_interarrival_time"]) * inputs["batch_size"] 
-    # assigning wait time to 0 for all customers
+   # assigning wait time to 0 for all customers
     wait = [0] * (upper_bound_of_customers + 1)
     logger.info(upper_bound_of_customers)
     logger.info(return_time)
